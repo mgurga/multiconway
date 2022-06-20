@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>MultiConway</title>
+    </head>
+    <body>
+        <div id="content">
+            <h1>Multiplayer Conways Game of Life</h1>
+            <br>
+            <p>Conways Game of Life consists of a huge grid (in this game it's infinite)</p>
+            <p>where evey second square in the grid either live, die, or duplicate based</p>
+            <p>on <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules">certain conditions</a>.</p>
+            <p>Now imagine people from around the world are adding squares at the same time.</p>
+            <br>
+            <p>Look at this example:</p>
+            <img id="example" src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Game_of_life_animated_glider.gif" alt="example animated pattern">
+            <noscript><p style="margin: 0; color: grey;">If you enable javascript more examples might appear</p></noscript>
+            <br>
+            <br>
+            <br>
+            <a href="/play">
+                <button style="background-color: green; color: white; border: 0; width: 30%; height: 40px; cursor: pointer;">Play Now</button>
+            </a>
+            <p style="margin: 0; color: grey;">(requires javascript)</p>
+        </div>
+    </body>
+    <style>
+        html {
+            background-color: black;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #content {
+            margin: 0 auto;
+            width:fit-content;
+            text-align: center;
+        }
+        #example {
+            width: auto;
+            height: 300px;
+        }
+    </style>
+    <script>
+        var gifs = [
+            "https://upload.wikimedia.org/wikipedia/commons/9/95/Game_of_life_blinker.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/1/12/Game_of_life_toad.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/1/1c/Game_of_life_beacon.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/0/07/Game_of_life_pulsar.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/f/fb/I-Column.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/f/f2/Game_of_life_animated_glider.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/3/37/Game_of_life_animated_LWSS.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/4/4e/Animated_Mwss.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/4/4f/Animated_Hwss.gif"
+        ];
+        document.getElementById("example").src = gifs[(Math.random() * gifs.length) | 0]
+    </script>
+</html>
