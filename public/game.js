@@ -8,6 +8,7 @@ var scaleFillNative = Math.max(deviceWidth / nativeWidth, deviceHeight / nativeH
 c.width = deviceWidth;
 c.height = deviceHeight;
 
+var socket = io()
 var squaresize = 40
 var boardsize = 401
 var scrollx = 0
@@ -19,6 +20,13 @@ var dragpos = [0, 0]
 var mousepos = [0, 0]
 var realscroll = [0, 0]
 var cells = []
+
+socket.on("cells", function(data) {
+    cells = []
+    for (const c in data) {
+        cells.push(data[c])
+    }
+});
 
 function draw() {
     drawGrid()
@@ -38,9 +46,6 @@ function drawCells() {
     for (const c of cells) {
         ctx.fillStyle = "rgb(" + c.r + "," + c.g + "," + c.b + ")"
         ctx.fillRect((c.x * squaresize) + realscroll[0], (c.y * squaresize) + realscroll[1], squaresize, squaresize)
-        // ctx.fillStyle = "rgb(0, 0, 0)"
-        // ctx.fillText("x: " + c.x, (c.x * squaresize) + realscroll[0], (c.y * squaresize) + realscroll[1] + 10)
-        // ctx.fillText("y: " + c.y, (c.x * squaresize) + realscroll[0], (c.y * squaresize) + realscroll[1] + 20)
     }
 }
 
@@ -74,24 +79,8 @@ function mouseClick(e) {
 
 function addCell(x, y) {
     var data = {"x": x, "y": y, "r": usercolor[0], "g": usercolor[1], "b": usercolor[2]}
-    fetch("/api/addcell", {
-        method: "POST",
-        headers: {'Content-Type': 'application/json'}, 
-        body: JSON.stringify(data)
-    }).then(res => {
-        getCells()
-    });
-}
-
-function getCells() {
-    fetch("/api/getcells")
-    .then(res => res.json())
-    .then(data => {
-        cells = []
-        for (var c in data) {
-            cells.push(data[c])
-        }
-    })
+    socket.emit("addcell", data)
+    socket.emit("getcells")
 }
 
 function rand(min, max) { return Math.random() * (max - min) + min; }
@@ -99,15 +88,14 @@ c.addEventListener("mousedown", (e) => {
     dragging = true
     dragpos[0] = dragstart[0] = e.clientX
     dragpos[1] = dragstart[1] = e.clientY
-});
+})
 c.addEventListener("mousemove", (e) => {
     [mousepos[0], mousepos[1]] = [e.clientX, e.clientY]
-});
+})
 c.addEventListener("mouseup", (e) => {
     dragging = false
     if (dragstart[0] == mousepos[0] && dragstart[1] == mousepos[1]) { mouseClick(e) }
-});
+})
 
 draw()
-var getCellInt = setInterval(getCells, 1000)
-getCells()
+var getcellint = setInterval(() => { socket.emit("getcells") }, 1000)

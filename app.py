@@ -1,10 +1,15 @@
 from flask import Flask, send_from_directory, request
+from flask_socketio import SocketIO, emit, send
 from apscheduler.schedulers.background import BackgroundScheduler
 from os.path import join, dirname
 from copy import copy
-from datetime import date, datetime
+from datetime import datetime
+import logging
+logging.getLogger("werkzeug").disabled = True
 
 app = Flask("multiplayer conways game of life")
+app.logger.setLevel(logging.INFO)
+socketio = SocketIO(app)
 public = join(dirname(__file__), "public")
 
 UPDATE_INTERVAL = 5
@@ -28,7 +33,7 @@ def js(): return send_from_directory(public, "game.js")
 def add_cell():
     req = request.get_json()
     if req != None:
-        print(f"adding cell at x: {req['x']}, y: {req['y']}")
+        app.logger.info(f"adding cell at x: {req['x']}, y: {req['y']}")
         nc = Cell(req['x'], req['y'], req['r'], req['g'], req['b'], True)
         for c in cells:
             if c.x == nc.x and c.y == nc.y:
@@ -40,9 +45,32 @@ def add_cell():
     else:
         return "ERROR", 404
 
+@socketio.on("addcell")
+def ws_add_cell(msg):
+    try:
+        nc = Cell(msg['x'], msg['y'], msg['r'], msg['g'], msg['b'], True)
+        for c in cells:
+            if c.x == nc.x and c.y == nc.y:
+                cells.remove(c)
+                break
+        cells.add(nc)
+        add_dead_cells_around(Cell(msg['x'], msg['y'], msg['r'], msg['g'], msg['b']))
+        send("ok")
+    except Exception as e:
+        print(e)
+        send("error")
+
+@socketio.on("getcells")
+def ws_get_cells():
+    out: dict = {}
+    clist = list(cells)
+    for i in range(0, len(clist)):
+        if clist[i].alive:
+            out = out | {i: clist[i].to_dict()}
+    socketio.emit("cells", out)
+
 @app.route("/api/getcells")
 def get_cells():
-    global cells
     out: dict = {}
     clist = list(cells)
     for i in range(0, len(clist)):
@@ -87,7 +115,9 @@ def step():
     cells = newcells
     for new_cell in newcpos:
         add_dead_cells_around(new_cell)
-    print(f"step finished. took {datetime.now() - stepstart}")
+
+    ws_get_cells()
+    app.logger.info(f"step finished, took {datetime.now() - stepstart}. {len(cells)} total cells")
 
 def add_dead_cells_around(c: Cell):
     for i in range(-1, 2):
@@ -132,3 +162,6 @@ def cell_at(x: int, y: int) -> bool:
 sched = BackgroundScheduler(daemon=True)
 sched.add_job(step, 'interval', seconds=UPDATE_INTERVAL)
 sched.start()
+
+if __name__ == '__main__':
+    socketio.run(app)
