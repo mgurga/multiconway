@@ -8,6 +8,7 @@ var scaleFillNative = Math.max(deviceWidth / nativeWidth, deviceHeight / nativeH
 c.width = deviceWidth;
 c.height = deviceHeight;
 
+var serverupdateint;
 var socket = io()
 var squaresize = 40
 var boardsize = 401
@@ -20,8 +21,17 @@ var dragpos = [0, 0]
 var mousepos = [0, 0]
 var realscroll = [0, 0]
 var cells = []
+var lastupdate = Date.now()
+var showui = true;
+var getcellint
+
+fetch('/info').then(response => response.json()).then(data => { 
+    serverupdateint = data.update
+    getcellint = setInterval(() => { socket.emit("getcells") }, (serverupdateint / 2) * 1000)
+})
 
 socket.on("cells", function(data) {
+    lastupdate = Date.now();
     cells = []
     for (const c in data) {
         cells.push(data[c])
@@ -31,6 +41,8 @@ socket.on("cells", function(data) {
 function draw() {
     drawGrid()
     drawCells()
+    if (showui)
+        drawUI()
     if (dragging) {
         scrollx += mousepos[0] - dragpos[0]
         scrolly += mousepos[1] - dragpos[1]
@@ -40,6 +52,25 @@ function draw() {
         dragpos[1] = mousepos[1]
     }
     requestAnimationFrame(draw);
+}
+
+function drawUI() {
+    ctx.fillStyle = "rgba(255, 255, 255, .3)"
+    ctx.fillRect(20, 20, 300, 90)
+
+    if (Date.now() - lastupdate < 200) {
+        ctx.fillStyle = "rgb(100, 255, 100)"
+    } else {
+        ctx.fillStyle = "rgb(255, 255, 255)"
+    }
+    ctx.font = ctx.font.replace(/\d+px/, "20px");
+    if (serverupdateint != undefined) {
+        ctx.fillText("server update interval: " + serverupdateint + " sec", 22, 40)
+    }
+    ctx.fillStyle = "rgb(255, 255, 255)"
+    ctx.fillText("click: to place cell", 22, 60)
+    ctx.fillText("click + drag: move point of view", 22, 80)
+    ctx.fillText("press H to toggle this message", 22, 100)
 }
 
 function drawCells() {
@@ -98,4 +129,8 @@ c.addEventListener("mouseup", (e) => {
 })
 
 draw()
-var getcellint = setInterval(() => { socket.emit("getcells") }, 1000)
+socket.emit("getcells")
+document.addEventListener("keypress", event => {
+    if (event.key == "h")
+        showui = !showui
+})

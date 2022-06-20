@@ -28,6 +28,8 @@ def index(): return send_from_directory(public, "index.html")
 def play(): return send_from_directory(public, "play.html")
 @app.route("/game.js")
 def js(): return send_from_directory(public, "game.js")
+@app.route("/info")
+def info(): return {"update": UPDATE_INTERVAL, "totalcells": len(cells)}
 
 @app.route("/api/addcell", methods=["POST"])
 def add_cell():
