@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory, request
-from flask_socketio import SocketIO, emit, send
+from flask_socketio import SocketIO, send
 from apscheduler.schedulers.background import BackgroundScheduler
 from os.path import join, dirname
 from copy import copy
@@ -166,4 +166,4 @@ sched.add_job(step, 'interval', seconds=UPDATE_INTERVAL)
 sched.start()
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, host="0.0.0.0", port=8000, debug=True)

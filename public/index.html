@@ -15,28 +15,29 @@
             <p>on <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules">certain conditions</a>.</p>
             <p>Now imagine people from around the world are adding squares at the same time.</p>
             <br>
-            <p>Look at this example:</p>
-            <img id="example" src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Game_of_life_animated_glider.gif" alt="example animated pattern">
-            <noscript><p style="margin: 0; color: grey;">If you enable javascript more examples might appear</p></noscript>
-            <br>
-            <br>
             <br>
             <a href="/play">
                 <button style="background-color: green; color: white; border: 0; width: 30%; height: 40px; cursor: pointer;">Play Now</button>
             </a>
-            <p style="margin: 0; color: grey;">(requires javascript)</p>
+            <p class="subtext">(requires javascript)</p>
+            <br>
+            <br>
+            <p>Look at this example:</p>
+            <img id="example" src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Game_of_life_animated_glider.gif" alt="example animated pattern">
+            <noscript><p class="subtext">If you enable javascript more examples might appear</p></noscript>
         </div>
         <footer>
-            <p><a href="https://github.com/mgurga/multiconway">view the source code</a></p>
+            <p class="subtext"><a href="https://github.com/mgurga/multiconway">view the source code</a></p>
         </footer>
     </body>
     <style>
-        html {
+        html, body {
             background-color: black;
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
         }
-        #content, footer {
+        #content {
             margin: 0 auto;
             width:fit-content;
             text-align: center;
@@ -44,6 +45,24 @@
         #example {
             width: auto;
             height: 300px;
+        }
+        footer {
+            text-align: center;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 2.5rem;
+            margin: 0;
+        }
+        .subtext {
+            margin: 0;
+            color: grey;
+        }
+        a {
+            color: rgb(61, 61, 61)
+        }
+        a:hover {
+            color: grey
         }
     </style>
     <script>
