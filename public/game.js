@@ -9,7 +9,6 @@ c.width = deviceWidth;
 c.height = deviceHeight;
 
 var serverupdateint;
-var socket = io()
 var squaresize = 40
 var boardsize = 401
 var scrollx = 0
@@ -22,21 +21,13 @@ var mousepos = [0, 0]
 var realscroll = [0, 0]
 var cells = []
 var lastupdate = Date.now()
-var showui = true;
+var showui = true
 var getcellint
 
 fetch('/info').then(response => response.json()).then(data => { 
     serverupdateint = data.update
-    getcellint = setInterval(() => { socket.emit("getcells") }, (serverupdateint / 2) * 1000)
+    getcellint = setInterval(() => { getCells() }, (serverupdateint / 2) * 1000)
 })
-
-socket.on("cells", function(data) {
-    lastupdate = Date.now();
-    cells = []
-    for (const c in data) {
-        cells.push(data[c])
-    }
-});
 
 function draw() {
     drawGrid()
@@ -101,6 +92,18 @@ function drawGrid() {
     if (scrolly < -squaresize) { scrolly = scrolly + squaresize }
 }
 
+function getCells() {
+    fetch("/api/getcells")
+    .then(res => res.json())
+    .then(data => {
+        lastupdate = Date.now()
+        cells = []
+        for (var c in data) {
+            cells.push(data[c])
+        }
+    })
+}
+
 function mouseClick(e) {
     var blockx = Math.floor((e.clientX - realscroll[0]) / squaresize)
     var blocky = Math.floor((e.clientY - realscroll[1]) / squaresize)
@@ -110,8 +113,13 @@ function mouseClick(e) {
 
 function addCell(x, y) {
     var data = {"x": x, "y": y, "r": usercolor[0], "g": usercolor[1], "b": usercolor[2]}
-    socket.emit("addcell", data)
-    socket.emit("getcells")
+    fetch("/api/addcell", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify(data)
+    }).then(res => {
+        getCells()
+    });
 }
 
 function rand(min, max) { return Math.random() * (max - min) + min; }
@@ -129,7 +137,7 @@ c.addEventListener("mouseup", (e) => {
 })
 
 draw()
-socket.emit("getcells")
+getCells() 
 document.addEventListener("keypress", event => {
     if (event.key == "h")
         showui = !showui

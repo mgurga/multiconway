@@ -1,5 +1,4 @@
 from flask import Flask, send_from_directory, request
-from flask_socketio import SocketIO, send
 from apscheduler.schedulers.background import BackgroundScheduler
 from os.path import join, dirname
 from copy import copy
@@ -9,7 +8,6 @@ logging.getLogger("werkzeug").disabled = True
 
 app = Flask("multiplayer conways game of life")
 app.logger.setLevel(logging.INFO)
-socketio = SocketIO(app)
 public = join(dirname(__file__), "public")
 
 UPDATE_INTERVAL = 5
@@ -47,37 +45,13 @@ def add_cell():
     else:
         return "ERROR", 404
 
-@socketio.on("addcell")
-def ws_add_cell(msg):
-    try:
-        nc = Cell(msg['x'], msg['y'], msg['r'], msg['g'], msg['b'], True)
-        for c in cells:
-            if c.x == nc.x and c.y == nc.y:
-                cells.remove(c)
-                break
-        cells.add(nc)
-        add_dead_cells_around(Cell(msg['x'], msg['y'], msg['r'], msg['g'], msg['b']))
-        send("ok")
-    except Exception as e:
-        print(e)
-        send("error")
-
-@socketio.on("getcells")
-def ws_get_cells():
-    out: dict = {}
-    clist = list(cells)
-    for i in range(0, len(clist)):
-        if clist[i].alive:
-            out = out | {i: clist[i].to_dict()}
-    socketio.emit("cells", out)
-
 @app.route("/api/getcells")
 def get_cells():
     out: dict = {}
     clist = list(cells)
     for i in range(0, len(clist)):
         if clist[i].alive:
-            out = out | {i: clist[i].to_dict()}
+            out.update({i: clist[i].to_dict()})
     return out
 
 def step():
@@ -118,7 +92,6 @@ def step():
     for new_cell in newcpos:
         add_dead_cells_around(new_cell)
 
-    ws_get_cells()
     app.logger.info(f"step finished, took {datetime.now() - stepstart}. {len(cells)} total cells")
 
 def add_dead_cells_around(c: Cell):
@@ -166,4 +139,4 @@ sched.add_job(step, 'interval', seconds=UPDATE_INTERVAL)
 sched.start()
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
