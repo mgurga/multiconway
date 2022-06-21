@@ -1,16 +1,18 @@
 from flask import Flask, send_from_directory, request
 from apscheduler.schedulers.background import BackgroundScheduler
-from os.path import join, dirname
+import os
 from copy import copy
 from datetime import datetime
 import logging
-logging.getLogger("werkzeug").disabled = True
-
-app = Flask("multiplayer conways game of life")
-app.logger.setLevel(logging.INFO)
-public = join(dirname(__file__), "public")
+import shelve
 
 UPDATE_INTERVAL = 5
+
+logging.getLogger("werkzeug").disabled = True
+app = Flask("multiplayer conways game of life")
+app.logger.setLevel(logging.INFO)
+public = os.path.join(os.path.dirname(__file__), "public")
+
 class Cell:
     def __init__(self, x: int, y: int, r: int, g: int, b: int, alive: bool = True) -> None:
         (self.x, self.y, self.r, self.g, self.b, self.alive) = x, y, r, g, b, alive
@@ -18,7 +20,25 @@ class Cell:
         return f"x: {self.x} y: {self.y} alive: {self.alive}"
     def to_dict(self) -> dict:
         return {"x": self.x, "y": self.y, "r": self.r, "g": self.g, "b": self.b}
-cells: set[Cell] = set()
+cells = set()
+
+if not os.path.isfile("cells"):
+    app.logger.info("no backup file detected, creating one")
+    with shelve.open("cells") as f:
+        f["cells"] = set()
+
+try:
+    with shelve.open("cells") as f:
+        cells = set(f["cells"])
+        app.logger.info(f"loaded {len(cells)} cells from backup")
+except Exception as e:
+    app.logger.warn("failed to load backup (you should probably delete the 'cells' file)")
+
+def save_cells():
+    global cells
+    app.logger.info("saved cells")
+    with shelve.open("cells") as f:
+        f["cells"] = cells
 
 @app.route("/")
 def index(): return send_from_directory(public, "index.html")
@@ -93,6 +113,7 @@ def step():
         add_dead_cells_around(new_cell)
 
     app.logger.info(f"step finished, took {datetime.now() - stepstart}. {len(cells)} total cells")
+    save_cells()
 
 def add_dead_cells_around(c: Cell):
     for i in range(-1, 2):
