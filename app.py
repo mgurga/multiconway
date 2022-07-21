@@ -7,9 +7,10 @@ import logging
 import shelve
 
 UPDATE_INTERVAL = 5
+BOUNDS = 5000
 
 logging.getLogger("werkzeug").disabled = True
-app = Flask("multiplayer conways game of life")
+app = Flask("multiconways")
 app.logger.setLevel(logging.INFO)
 public = os.path.join(os.path.dirname(__file__), "public")
 
@@ -32,7 +33,7 @@ try:
         cells = set(f["cells"])
         app.logger.info(f"loaded {len(cells)} cells from backup")
 except Exception as e:
-    app.logger.warn("failed to load backup (you should probably delete the 'cells' file)")
+    app.logger.warning("failed to load backup (you should probably delete the 'cells' file)")
 
 def save_cells():
     global cells
@@ -55,12 +56,15 @@ def add_cell():
     if req != None:
         app.logger.info(f"adding cell at x: {req['x']}, y: {req['y']}")
         nc = Cell(req['x'], req['y'], req['r'], req['g'], req['b'], True)
-        for c in cells:
-            if c.x == nc.x and c.y == nc.y:
-                cells.remove(c)
-                break
-        cells.add(nc)
-        add_dead_cells_around(Cell(req['x'], req['y'], req['r'], req['g'], req['b']))
+        if not (nc.x >= BOUNDS or nc.y >= BOUNDS or nc.x <= -BOUNDS or nc.y <= -BOUNDS):
+            for c in cells:
+                if c.x == nc.x and c.y == nc.y:
+                    cells.remove(c)
+                    break
+            cells.add(nc)
+            add_dead_cells_around(Cell(req['x'], req['y'], req['r'], req['g'], req['b']))
+        else:
+            app.logger.info("not adding cell, out of bounds")
         return "OK", 200
     else:
         return "ERROR", 404
@@ -80,9 +84,16 @@ def step():
     newcells: set[Cell] = set()
     newcpos: list[Cell] = []
 
+    if (len(cells) == 0):
+        return
+
     for c in cells:
         adj = neighbors(c)
         newc = copy(c)
+
+        # Kill cell if out of bounds
+        if c.x >= BOUNDS or c.y >= BOUNDS or c.x <= -BOUNDS or c.y <= -BOUNDS:
+            newc.alive = False
 
         # 1. Any live cell with fewer than two live neighbours dies, as if by underpopulation.
         if adj == 1 or adj == 0 and c.alive:
@@ -160,4 +171,4 @@ sched.add_job(step, 'interval', seconds=UPDATE_INTERVAL)
 sched.start()
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=False)
