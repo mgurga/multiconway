@@ -24,7 +24,7 @@ var lastupdate = Date.now()
 var showui = true
 var getcellint
 
-fetch('/info').then(response => response.json()).then(data => { 
+fetch('info').then(response => response.json()).then(data => { 
     serverupdateint = data.update
     getcellint = setInterval(() => { getCells() }, (serverupdateint / 2) * 1000)
 })
@@ -93,7 +93,7 @@ function drawGrid() {
 }
 
 function getCells() {
-    fetch("/api/getcells")
+    fetch("api/getcells")
     .then(res => res.json())
     .then(data => {
         lastupdate = Date.now()
@@ -113,7 +113,7 @@ function mouseClick(e) {
 
 function addCell(x, y) {
     var data = {"x": x, "y": y, "r": usercolor[0], "g": usercolor[1], "b": usercolor[2]}
-    fetch("/api/addcell", {
+    fetch("api/addcell", {
         method: "POST",
         headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify(data)
